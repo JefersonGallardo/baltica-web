@@ -4,7 +4,7 @@ import type { Color, Shape } from "@/lib/products";
 // Ilustración vectorial de la prenda en el color elegido.
 // En la versión final se reemplaza por fotos reales de cada color.
 
-const BODY: Record<Shape, string> = {
+export const BODY: Record<Shape, string> = {
   tee: "M70 22 Q100 40 130 22 L168 36 L196 80 L164 96 L156 84 L156 208 Q100 216 44 208 L44 84 L36 96 L4 80 L32 36 Z",
   fitted:
     "M74 24 Q100 40 126 24 L160 36 L186 76 L158 90 L150 82 Q140 140 152 208 Q100 216 48 208 Q60 140 50 82 L42 90 L14 76 L40 36 Z",
@@ -17,14 +17,17 @@ export default function Tee({
   shape = "tee",
   className,
   title,
+  back = false,
 }: {
   color: Color;
   shape?: Shape;
   className?: string;
   title?: string;
+  back?: boolean;
 }) {
   const id = useId().replace(/:/g, "");
   const fill = color.melange ? `url(#m${id})` : color.hex;
+  const body = bodyPath(shape, back);
   return (
     <svg
       viewBox="0 0 200 220"
@@ -47,8 +50,8 @@ export default function Tee({
           </pattern>
         )}
       </defs>
-      <path d={BODY[shape]} fill={fill} />
-      <path d={BODY[shape]} fill={`url(#s${id})`} />
+      <path d={body} fill={fill} />
+      <path d={body} fill={`url(#s${id})`} />
       {shape === "hoodie" ? (
         <>
           <path d="M76 38 Q100 12 124 38 Q100 56 76 38 Z" fill="#000" opacity=".28" />
@@ -57,14 +60,23 @@ export default function Tee({
         </>
       ) : (
         <path
-          d={shape === "tee" ? "M70 22 Q100 48 130 22" : "M74 24 Q100 46 126 24"}
+          d={neckPath(shape, back)}
           fill="none"
           stroke="#000"
           strokeOpacity=".22"
           strokeWidth="5"
         />
       )}
-      <path d={BODY[shape]} fill="none" stroke="#000" strokeOpacity=".16" strokeWidth="1.5" />
+      <path d={body} fill="none" stroke="#000" strokeOpacity=".16" strokeWidth="1.5" />
     </svg>
   );
+}
+
+export function neckPath(shape: Shape, back = false) {
+  if (shape === "tee") return back ? "M70 22 Q100 30 130 22" : "M70 22 Q100 48 130 22";
+  return back ? "M74 24 Q100 31 126 24" : "M74 24 Q100 46 126 24";
+}
+
+export function bodyPath(shape: Shape, back = false) {
+  return back ? BODY[shape].replace("Q100 40", "Q100 28") : BODY[shape];
 }

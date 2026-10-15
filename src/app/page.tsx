@@ -3,7 +3,10 @@ import ProductCard from "@/components/ProductCard";
 import RackCarousel from "@/components/RackCarousel";
 import Tee from "@/components/Tee";
 import { STORE, WHOLESALE_FROM } from "@/lib/config";
+import { DESIGNS } from "@/lib/designs";
 import { C, PRODUCTS, soles } from "@/lib/products";
+
+const svgData = (svg: string) => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 
 const CATS = [
   { href: "/tienda/?cat=hombre", label: "Hombre", color: C.marino, shape: "tee" as const },
@@ -55,6 +58,40 @@ export default function Home() {
           {best.map((p) => (
             <ProductCard key={p.slug} product={p} />
           ))}
+        </div>
+      </section>
+
+      <section className="creative-band wrap">
+        <div className="creative-inner">
+          <div>
+            <h2>Diseña tu polo y míralo antes de pedirlo</h2>
+            <p>
+              Sube tu foto o tu logo, elige uno de nuestros diseños o escribe tu frase. Ves cómo queda
+              en tu talla, adelante y atrás, y lo pides por WhatsApp.
+            </p>
+            <div className="techs-list" aria-label="Técnicas">
+              <span>Transfer</span>
+              <span>DTF</span>
+              <span>Serigrafía</span>
+              <span>Vinilo de corte</span>
+              <span>Pedrería</span>
+            </div>
+            <Link href="/creativo/" className="btn">
+              Diseñar mi polo
+            </Link>
+          </div>
+          <div className="creative-tees" aria-hidden="true">
+            <div className="ct">
+              <Tee color={C.blanco} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="print" src={svgData(DESIGNS[0].svg)} alt="" />
+            </div>
+            <div className="ct">
+              <Tee color={C.negro} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="print" src={svgData(DESIGNS[1].svg)} alt="" />
+            </div>
+          </div>
         </div>
       </section>
 

@@ -10,11 +10,27 @@ Demo de la nueva tienda web de [Baltica T-Shirts](https://www.polosbaltica.com/)
 - **Pedido por WhatsApp**: el carrito arma el mensaje con modelo, color, talla, cantidad, precio y total. Desde 12 prendas del mismo modelo se aplica solo el precio por mayor.
 - **Por mayor y empresas**: cotizador con modelo, cantidad, tipo de estampado (serigrafía o DTF), ubicaciones y fecha, que envía la cotización por WhatsApp. Incluye la tabla de precios por cantidad.
 
+- **Creativo (diseña tu polo)**: el cliente sube su imagen, elige un diseño en stock o escribe un texto, en frente y espalda. El área de estampado se ajusta a la talla (A3 adultos, A4 niños) y la vista previa cambia según la técnica: transfer, DTF, serigrafía (1 a 4 tintas), vinilo de corte (un color) y pedrería. Calcula el precio por técnica y tamaño, genera la imagen del polo y un código de pedido, y lo envía por WhatsApp.
+- **Seguimiento**: línea de estados del pedido y agenda de recojo.
+
+### Seguridad al subir imágenes
+
+- Solo se aceptan PNG, JPG y WEBP, revisando los bytes reales del archivo (no solo la extensión). Se rechazan SVG y otros formatos que pueden llevar código.
+- Máximo 10 MB y mínimo 200 px por lado.
+- La imagen se redibuja en un canvas: se descartan metadatos y cualquier cosa que no sean píxeles.
+- El archivo **nunca se sube a un servidor**: se procesa en el navegador del cliente y él mismo lo envía por WhatsApp.
+
+### Límites de la demo
+
+- Los pedidos y su seguimiento se guardan solo en el dispositivo del cliente. La versión real necesita una base de datos y un panel para que la tienda cambie los estados (por ejemplo con Supabase o Firebase).
+
 ## Antes de mostrarla
 
 - **Precios**: son referenciales. Se cambian en `src/lib/products.ts` (precio por unidad y por mayor de cada modelo).
 - **Costos de estampado**: en `src/app/mayoristas/Quote.tsx`.
 - **Medidas de la guía de tallas**: en `src/components/SizeGuide.tsx`.
+- **Medidas por talla, hojas y precios de estampado del Creativo**: en `src/lib/creative.ts`.
+- **Diseños en stock**: en `src/lib/designs.ts`.
 - **WhatsApp, dirección y redes**: en `src/lib/config.ts`.
 - **Fotos**: la demo usa ilustraciones de cada prenda en su color. En la versión final van fotos reales de cada modelo y color.
 

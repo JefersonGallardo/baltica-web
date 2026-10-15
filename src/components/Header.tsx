@@ -7,10 +7,9 @@ import { useCart } from "./CartProvider";
 
 const NAV = [
   { href: "/tienda/", label: "Tienda" },
-  { href: "/tienda/?cat=hombre", label: "Hombre" },
-  { href: "/tienda/?cat=dama", label: "Dama" },
-  { href: "/tienda/?cat=ninos", label: "Niños" },
+  { href: "/creativo/", label: "Creativo: diseña tu polo", hot: true },
   { href: "/mayoristas/", label: "Por mayor y empresas" },
+  { href: "/seguimiento/", label: "Seguir mi pedido" },
 ];
 
 export default function Header() {
@@ -30,7 +29,7 @@ export default function Header() {
           </Link>
           <nav className={`nav ${menu ? "nav-open" : ""}`} aria-label="Principal">
             {NAV.map((n) => (
-              <Link key={n.href} href={n.href} onClick={() => setMenu(false)}>
+              <Link key={n.href} href={n.href} className={n.hot ? "nav-hot" : undefined} onClick={() => setMenu(false)}>
                 {n.label}
               </Link>
             ))}
