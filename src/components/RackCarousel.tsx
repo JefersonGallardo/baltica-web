@@ -27,10 +27,14 @@ const COLORS: { color: Color; models: number; from: number }[] = (() => {
   return [...map.values()].sort((a, b) => lum(b.color.hex) - lum(a.color.hex));
 })();
 
-const START = Math.max(
-  0,
-  COLORS.findIndex((c) => c.color.name === "Rojo"),
-);
+const N = COLORS.length;
+// La lista se repite varias veces y siempre volvemos a la copia del medio,
+// así nunca se llega a un extremo vacío.
+const COPIES = 5;
+const MIDDLE = Math.floor(COPIES / 2);
+const ITEMS = Array.from({ length: COPIES * N }, (_, i) => COLORS[i % N]);
+const RED = Math.max(0, COLORS.findIndex((c) => c.color.name === "Rojo"));
+const START = MIDDLE * N + RED;
 
 export default function RackCarousel() {
   const router = useRouter();
@@ -38,7 +42,16 @@ export default function RackCarousel() {
   const [active, setActive] = useState(START);
   const [dragging, setDragging] = useState(false);
   const drag = useRef({ down: false, startX: 0, startScroll: 0, moved: false });
+  const touching = useRef(false);
   const raf = useRef(0);
+  const settle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const copyWidth = () => {
+    const ul = listRef.current!;
+    const a = ul.children[0] as HTMLElement;
+    const b = ul.children[N] as HTMLElement;
+    return b.offsetLeft - a.offsetLeft;
+  };
 
   const centerOn = useCallback((i: number, smooth = true) => {
     const ul = listRef.current;
@@ -50,35 +63,59 @@ export default function RackCarousel() {
     });
   }, []);
 
-  // Cuál polo está sobre la flecha
-  const measure = useCallback(() => {
-    const ul = listRef.current;
-    if (!ul) return;
+  // Índice del polo que está sobre la flecha
+  const nearest = useCallback(() => {
+    const ul = listRef.current!;
+    const first = ul.children[0] as HTMLElement;
+    const w = first.offsetWidth;
     const mid = ul.scrollLeft + ul.clientWidth / 2;
-    let best = 0;
-    let dist = Infinity;
-    Array.from(ul.children).forEach((el, i) => {
-      const li = el as HTMLElement;
-      const d = Math.abs(li.offsetLeft + li.offsetWidth / 2 - mid);
-      if (d < dist) {
-        dist = d;
-        best = i;
-      }
-    });
-    setActive(best);
+    const i = Math.round((mid - first.offsetLeft - w / 2) / w);
+    return Math.min(ITEMS.length - 1, Math.max(0, i));
   }, []);
 
-  const onScroll = () => {
+  // Salto invisible a la copia del medio (mismo color, misma posición en pantalla)
+  const recenter = useCallback(() => {
+    const ul = listRef.current;
+    if (!ul) return 0;
+    const i = nearest();
+    const copy = Math.floor(i / N);
+    if (copy === MIDDLE) return 0;
+    const shift = (MIDDLE - copy) * copyWidth();
+    ul.style.scrollSnapType = "none";
+    ul.scrollLeft += shift;
+    void ul.offsetWidth;
+    ul.style.scrollSnapType = "";
+    setActive(i + (MIDDLE - copy) * N);
+    return shift;
+  }, [nearest]);
+
+  const onScroll = useCallback(() => {
     cancelAnimationFrame(raf.current);
-    raf.current = requestAnimationFrame(measure);
-  };
+    raf.current = requestAnimationFrame(() => setActive(nearest()));
+    clearTimeout(settle.current);
+    settle.current = setTimeout(() => {
+      if (!drag.current.down && !touching.current) recenter();
+    }, 160);
+  }, [nearest, recenter]);
 
   useEffect(() => {
     centerOn(START, false);
-    const onResize = () => centerOn(START, false);
-    window.addEventListener("resize", onResize, { once: true });
-    return () => window.removeEventListener("resize", onResize);
-  }, [centerOn]);
+    const ul = listRef.current!;
+    const onTouchStart = () => (touching.current = true);
+    const onTouchEnd = () => {
+      touching.current = false;
+      onScroll();
+    };
+    const onResize = () => centerOn(MIDDLE * N + (nearest() % N), false);
+    ul.addEventListener("touchstart", onTouchStart, { passive: true });
+    ul.addEventListener("touchend", onTouchEnd, { passive: true });
+    window.addEventListener("resize", onResize);
+    return () => {
+      ul.removeEventListener("touchstart", onTouchStart);
+      ul.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [centerOn, nearest, onScroll]);
 
   // Arrastrar con el mouse (en celular el deslizamiento es nativo)
   const onPointerDown = (e: React.PointerEvent) => {
@@ -95,7 +132,12 @@ export default function RackCarousel() {
       setDragging(true);
       listRef.current!.setPointerCapture(e.pointerId);
     }
-    if (d.moved) listRef.current!.scrollLeft = d.startScroll - dx;
+    if (!d.moved) return;
+    const ul = listRef.current!;
+    ul.scrollLeft = d.startScroll - dx;
+    // Si el arrastre se acerca a un borde, saltamos a la copia del medio sin soltar
+    const copy = Math.floor(nearest() / N);
+    if (copy === 0 || copy === COPIES - 1) d.startScroll += recenter();
   };
   const endDrag = () => {
     const d = drag.current;
@@ -103,23 +145,8 @@ export default function RackCarousel() {
     d.down = false;
     if (d.moved) {
       setDragging(false);
-      measure();
       // Al soltar, el polo más cercano se acomoda sobre la flecha
-      requestAnimationFrame(() => {
-        const ul = listRef.current!;
-        const mid = ul.scrollLeft + ul.clientWidth / 2;
-        let best = 0;
-        let dist = Infinity;
-        Array.from(ul.children).forEach((el, i) => {
-          const li = el as HTMLElement;
-          const dd = Math.abs(li.offsetLeft + li.offsetWidth / 2 - mid);
-          if (dd < dist) {
-            dist = dd;
-            best = i;
-          }
-        });
-        centerOn(best);
-      });
+      requestAnimationFrame(() => centerOn(nearest()));
     }
   };
 
@@ -130,20 +157,17 @@ export default function RackCarousel() {
       return;
     }
     if (i !== active) centerOn(i);
-    else router.push(`/tienda/?color=${encodeURIComponent(COLORS[i].color.name)}`);
+    else router.push(`/tienda/?color=${encodeURIComponent(ITEMS[i].color.name)}`);
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowRight") {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
       e.preventDefault();
-      centerOn(Math.min(COLORS.length - 1, active + 1));
-    } else if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      centerOn(Math.max(0, active - 1));
+      centerOn(active + (e.key === "ArrowRight" ? 1 : -1));
     }
   };
 
-  const cur = COLORS[active];
+  const cur = ITEMS[active];
 
   return (
     <div className="rack">
@@ -160,11 +184,12 @@ export default function RackCarousel() {
         tabIndex={0}
         aria-label="Colores disponibles. Desliza o usa las flechas del teclado."
       >
-        {COLORS.map(({ color, from }, i) => (
+        {ITEMS.map(({ color, from }, i) => (
           <li
-            key={color.name}
+            key={`${color.name}-${Math.floor(i / N)}`}
             className={i === active ? "is-active" : ""}
-            style={{ ["--i" as string]: i }}
+            style={{ ["--i" as string]: Math.abs(i - START) }}
+            aria-hidden={Math.floor(i / N) !== MIDDLE}
           >
             <a
               href={`${BASE}/tienda/?color=${encodeURIComponent(color.name)}`}

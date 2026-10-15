@@ -130,7 +130,7 @@ p { margin: 0; }
 .rack-items.is-dragging { cursor: grabbing; scroll-snap-type: none; }
 .rack-items:focus-visible { outline-offset: -3px; }
 .rack-items li { position: relative; flex: 0 0 var(--w); scroll-snap-align: center; }
-.rack-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; transform-origin: 50% 0; animation: swing 2.6s ease-out both; animation-delay: calc(var(--i) * 50ms); -webkit-user-drag: none; }
+.rack-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; transform-origin: 50% 0; animation: swing 2.6s ease-out both; animation-delay: calc(min(var(--i), 12) * 50ms); -webkit-user-drag: none; }
 .hanger { width: 58px; color: #55555b; margin-bottom: -6px; position: relative; z-index: 1; }
 .rack-sway { display: block; transform-origin: 50% 0; transition: transform .25s ease; }
 .rack-tee { width: 128px; max-width: none; margin-inline: -2px; filter: drop-shadow(0 8px 10px rgba(0,0,0,.14)); pointer-events: none; }
