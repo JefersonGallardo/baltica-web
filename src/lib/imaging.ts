@@ -68,7 +68,7 @@ export async function readUpload(file: File): Promise<UploadResult> {
     canvas: trimmed,
     full,
     photo: real === "image/jpeg",
-    name: file.name.replace(/[^\w.\- áéíóúñÁÉÍÓÚÑ]/g, "").slice(0, 40) || "imagen",
+    name: shortName(file.name),
     transparent: hasTransparency(trimmed),
   };
 }
@@ -315,4 +315,13 @@ export function svgToCanvas(svg: string, width = 1400): Promise<HTMLCanvasElemen
 
 export function canvasBlob(c: HTMLCanvasElement, type: "image/png" | "image/jpeg", quality?: number) {
   return new Promise<Blob>((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("blob"))), type, quality));
+}
+
+// Nombre corto y legible: "973692381954733633.jfif" pasa a "9736923…3633.jfif"
+function shortName(n: string) {
+  const clean = n.replace(/[^\w.\- áéíóúñÁÉÍÓÚÑ]/g, "") || "imagen";
+  const dot = clean.lastIndexOf(".");
+  const base = dot > 0 ? clean.slice(0, dot) : clean;
+  const ext = dot > 0 ? clean.slice(dot) : "";
+  return base.length > 18 ? `${base.slice(0, 10)}…${base.slice(-4)}${ext}` : clean;
 }

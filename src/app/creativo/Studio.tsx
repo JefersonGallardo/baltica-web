@@ -407,9 +407,9 @@ export default function Studio() {
         i(`${qty > 1 ? `${qty} x ` : ""}polo ${soles(garment)} + estampado ${soles(prFront.price + prBack.price)}`),
       ],
       [
-        b("Archivos"),
-        "- Vista previa del polo",
-        ...designs.map((d) => `- ${d.file.name} (diseño en calidad original, va como documento)`),
+        b("Te envío a continuación"),
+        `- ${code}-vista-previa.png (vista previa del polo)`,
+        ...designs.map((d) => `- ${d.file.name} (mi diseño en calidad original, como documento)`),
       ],
       [`Seguimiento: ${siteUrl(`/seguimiento/?codigo=${code}`)}`],
     );
@@ -438,7 +438,7 @@ export default function Studio() {
         out.push({
           file,
           url: URL.createObjectURL(blob),
-          label: `${SIDE_LABEL[s]}: ${l.kind === "text" ? `texto "${l.text?.value}"` : l.name}`,
+          label: `${SIDE_LABEL[s]}: ${l.kind === "text" ? `texto "${l.text?.value}"` : l.kind === "design" ? l.name : `tu imagen ${k + 1}`}`,
           px: `${src.width} × ${src.height} px, ${blob.size > 1024 * 1024 ? `${(blob.size / 1024 / 1024).toFixed(1)} MB` : `${Math.ceil(blob.size / 1024)} KB`}`,
         });
       }
@@ -446,23 +446,6 @@ export default function Studio() {
     return out;
   };
 
-  // Paso 1: el mensaje y la vista previa (como foto: aquí la compresión no importa)
-  const sharePreview = async () => {
-    if (!result) return;
-    const data = { files: [result.preview], text: result.msg };
-    if (navigator.canShare?.(data)) {
-      try {
-        await navigator.share(data);
-        setSent((x) => ({ ...x, preview: true }));
-        return;
-      } catch (e) {
-        if ((e as Error).name === "AbortError") return;
-      }
-    }
-    save(result.preview);
-    window.open(waLink(result.msg), "_blank", "noopener");
-    setSent((x) => ({ ...x, preview: true }));
-  };
   const save = (f: File) => {
     const url = URL.createObjectURL(f);
     const a = document.createElement("a");
@@ -473,11 +456,10 @@ export default function Studio() {
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   };
-  // Paso 2: cada diseño se guarda en el equipo para adjuntarlo como Documento
-  const saveDesign = (k: number) => {
-    if (!result) return;
-    save(result.designs[k].file);
-    setSent((x) => ({ ...x, [k]: true }));
+  // Cada archivo se guarda en el equipo para adjuntarlo en el chat
+  const saveFile = (key: string, f: File) => {
+    save(f);
+    setSent((x) => ({ ...x, [key]: true }));
   };
 
   const onSide = layers.filter((l) => l.side === side);
@@ -893,35 +875,47 @@ export default function Studio() {
                 estado de tu pedido.
               </p>
               <ol className="send-steps">
-                <li className={sent.preview ? "done" : ""}>
-                  <strong>Envía tu pedido y la vista previa</strong>
-                  <span>Se abre WhatsApp con el detalle de tu pedido. Elige el chat de Baltica.</span>
-                  <button className="btn btn-wa btn-block" onClick={sharePreview}>
-                    {sent.preview ? "Enviar de nuevo" : "Enviar pedido por WhatsApp"}
-                  </button>
-                  <a href={waLink(result.msg)} target="_blank" rel="noopener noreferrer" className="link-btn small">
-                    ¿No aparece Baltica al compartir? Abre el chat directo
+                <li className={sent.chat ? "done" : ""}>
+                  <strong>Abre el chat de Baltica</strong>
+                  <span>Se abre WhatsApp con el detalle de tu pedido ya escrito. Solo toca enviar.</span>
+                  <a
+                    className="btn btn-wa btn-block"
+                    href={waLink(result.msg)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setSent((x) => ({ ...x, chat: true }))}
+                  >
+                    {sent.chat ? "Abrir el chat de nuevo" : "Abrir chat y enviar pedido"}
                   </a>
                 </li>
-                <li className={result.designs.every((_, k) => sent[k]) ? "done" : ""}>
-                  <strong>Envía tu diseño en calidad original</strong>
+                <li className={sent.preview && result.designs.every((_, k) => sent[`d${k}`]) ? "done" : ""}>
+                  <strong>Guarda tus archivos y adjúntalos en el chat</strong>
                   <span>
-                    Si lo mandas como foto, WhatsApp lo comprime. Guárdalo y adjúntalo como{" "}
-                    <b>Documento</b>: llega intacto para estampar.
+                    La vista previa puede ir como foto. Tu diseño adjúntalo como <b>Documento</b>: así
+                    WhatsApp no lo comprime y llega intacto para estampar.
                   </span>
                   <ul className="design-files">
+                    <li>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={result.image} alt="" />
+                      <div>
+                        <strong>Vista previa del polo</strong>
+                        <small>Puede ir como foto</small>
+                      </div>
+                      <button className={`btn ${sent.preview ? "btn-outline" : "btn-dark"}`} onClick={() => saveFile("preview", result.preview)}>
+                        {sent.preview ? "Guardado" : "Guardar"}
+                      </button>
+                    </li>
                     {result.designs.map((d, k) => (
                       <li key={d.file.name}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={d.url} alt="" />
                         <div>
                           <strong>{d.label}</strong>
-                          <small>
-                            {d.file.name}, {d.px}
-                          </small>
+                          <small>Como documento, {d.px}</small>
                         </div>
-                        <button className={`btn ${sent[k] ? "btn-outline" : "btn-dark"}`} onClick={() => saveDesign(k)}>
-                          {sent[k] ? "Guardado" : "Guardar"}
+                        <button className={`btn ${sent[`d${k}`] ? "btn-outline" : "btn-dark"}`} onClick={() => saveFile(`d${k}`, d.file)}>
+                          {sent[`d${k}`] ? "Guardado" : "Guardar"}
                         </button>
                       </li>
                     ))}
@@ -931,8 +925,8 @@ export default function Studio() {
                     <ol>
                       <li>En el chat de Baltica toca el clip (Android) o el + (iPhone).</li>
                       <li>Elige <b>Documento</b>. No elijas Galería ni Fotos.</li>
-                      <li>Busca el archivo en Descargas (Android) o en Archivos (iPhone) y envíalo.</li>
-                      <li>En la computadora, arrastra el archivo al chat de WhatsApp Web y elige enviarlo como documento.</li>
+                      <li>Busca el archivo en Descargas (Android) o en Archivos, carpeta Descargas (iPhone), y envíalo.</li>
+                      <li>En la computadora, arrastra el archivo al chat de WhatsApp Web y envíalo como documento.</li>
                     </ol>
                   </details>
                 </li>
@@ -941,14 +935,9 @@ export default function Studio() {
                   <span>Sigue tu pedido con tu código y agenda cuándo recogerlo.</span>
                 </li>
               </ol>
-              <div className="result-row">
-                <button className="btn btn-outline" onClick={() => result && save(result.preview)}>
-                  Guardar vista previa
-                </button>
-                <Link className="btn btn-outline" href={`/seguimiento/?codigo=${result.code}`}>
-                  Ver seguimiento
-                </Link>
-              </div>
+              <Link className="btn btn-outline btn-block" href={`/seguimiento/?codigo=${result.code}`}>
+                Ver el seguimiento de mi pedido
+              </Link>
             </div>
           </div>
         </div>
