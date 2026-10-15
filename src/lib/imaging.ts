@@ -8,8 +8,17 @@ const MIN_SIDE = 200;
 const ALLOWED = ["image/png", "image/jpeg", "image/webp"];
 
 export type UploadResult =
-  | { ok: true; canvas: HTMLCanvasElement; name: string; transparent: boolean }
+  | {
+      ok: true;
+      canvas: HTMLCanvasElement; // versión de trabajo para la vista previa
+      full: HTMLCanvasElement; // resolución completa, para enviar a la tienda
+      photo: boolean; // true si era JPG (se exporta como JPG de alta calidad)
+      name: string;
+      transparent: boolean;
+    }
   | { ok: false; error: string };
+
+const FULL_SIDE = 6000; // límite de la copia en alta resolución
 
 function sniff(bytes: Uint8Array): string | null {
   const b = bytes;
@@ -44,18 +53,21 @@ export async function readUpload(file: File): Promise<UploadResult> {
     bmp.close();
     return { ok: false, error: `La imagen es muy pequeña. Usa una de al menos ${MIN_SIDE} px por lado.` };
   }
-  // 3) La redibujamos en un canvas nuevo: solo quedan los píxeles
-  const scale = Math.min(1, MAX_SIDE / Math.max(bmp.width, bmp.height));
-  const c = document.createElement("canvas");
-  c.width = Math.round(bmp.width * scale);
-  c.height = Math.round(bmp.height * scale);
-  const ctx = c.getContext("2d")!;
-  ctx.drawImage(bmp, 0, 0, c.width, c.height);
+  // 3) La redibujamos en canvas nuevos: solo quedan los píxeles (sin metadatos
+  //    como la ubicación GPS de la foto). Guardamos una copia a resolución completa.
+  const fs = Math.min(1, FULL_SIDE / Math.max(bmp.width, bmp.height));
+  const full = document.createElement("canvas");
+  full.width = Math.round(bmp.width * fs);
+  full.height = Math.round(bmp.height * fs);
+  full.getContext("2d")!.drawImage(bmp, 0, 0, full.width, full.height);
   bmp.close();
-  const trimmed = trim(c);
+  const work = clone(full, MAX_SIDE);
+  const trimmed = trim(work);
   return {
     ok: true,
     canvas: trimmed,
+    full,
+    photo: real === "image/jpeg",
     name: file.name.replace(/[^\w.\- áéíóúñÁÉÍÓÚÑ]/g, "").slice(0, 40) || "imagen",
     transparent: hasTransparency(trimmed),
   };
@@ -263,9 +275,8 @@ export const FONTS = [
   { name: "Simple", family: "Archivo", weight: 800 },
 ];
 
-export async function renderText(text: string, fontIdx: number, color: string) {
+export async function renderText(text: string, fontIdx: number, color: string, size = 160) {
   const f = FONTS[fontIdx] ?? FONTS[0];
-  const size = 160;
   const font = `${f.weight} ${size}px "${f.family}"`;
   try {
     await document.fonts.load(font, text);
@@ -300,4 +311,8 @@ export function svgToCanvas(svg: string, width = 1400): Promise<HTMLCanvasElemen
     img.onerror = reject;
     img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
   });
+}
+
+export function canvasBlob(c: HTMLCanvasElement, type: "image/png" | "image/jpeg", quality?: number) {
+  return new Promise<Blob>((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("blob"))), type, quality));
 }

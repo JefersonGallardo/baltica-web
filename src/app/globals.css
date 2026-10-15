@@ -527,3 +527,6 @@ main > :last-child.wrap.section { padding-bottom: clamp(56px, 8vw, 96px); }
 .my-orders li { display: flex; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: .92rem; }
 .my-orders li span { color: var(--muted); }
 .my-orders a { color: var(--red); }
+.files-out { display: grid; gap: 8px; }
+.files-out span { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: .82rem; color: var(--muted); }
+.files-out strong { color: var(--ink); font-size: .88rem; word-break: break-all; }

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { WHOLESALE_FROM } from "@/lib/config";
 import { PRODUCTS, soles } from "@/lib/products";
-import { waLink } from "@/lib/whatsapp";
+import { b, i, msg, waLink } from "@/lib/whatsapp";
 
 // Costos referenciales de estampado por prenda (confirmar con el taller).
 const PRINT = {
@@ -41,22 +41,33 @@ export default function Quote() {
   const togglePlace = (pl: string) =>
     setPlaces((cur) => (cur.includes(pl) ? cur.filter((x) => x !== pl) : [...cur, pl]));
 
-  const msg = [
-    "Hola Baltica, quiero cotizar:",
-    "",
-    `Modelo: ${p.name}`,
-    `Cantidad: ${qty} prendas`,
-    colors ? `Colores: ${colors}` : null,
-    `Estampado: ${PRINT[print].label}${print !== "ninguno" ? ` en ${places.join(", ").toLowerCase() || "por definir"}` : ""}${print === "serigrafia" ? `, ${inks} color(es)` : ""}`,
-    date ? `Lo necesito para: ${date}` : null,
-    name ? `Nombre o empresa: ${name}` : null,
-    "",
-    `Estimado de la web: ${soles(unit)} c/u, ${soles(total)} en total.`,
-    big ? "Somos más de 50, ¿qué precio especial nos pueden dar?" : null,
-  ]
-    .filter((l) => l !== null)
-    .join("\n")
-    .trim();
+  const dateLabel = date
+    ? new Date(date + "T12:00").toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" })
+    : "";
+  const message = msg(
+    ["Hola Baltica 👋", "Quiero una cotización por mayor:"],
+    [
+      `🏷️ ${b("Pedido")}`,
+      `Modelo: ${p.name}`,
+      `Cantidad: ${qty} prendas`,
+      colors && `Colores: ${colors}`,
+    ],
+    [
+      `🎨 ${b("Estampado: " + PRINT[print].label)}`,
+      print !== "ninguno" && `Ubicación: ${places.join(", ").toLowerCase() || "por definir"}`,
+      print === "serigrafia" && `Colores del diseño: ${inks}`,
+    ],
+    (date || name) && [
+      `📋 ${b("Datos")}`,
+      name && `Nombre o empresa: ${name}`,
+      date && `Lo necesito para: ${dateLabel}`,
+    ],
+    [
+      `💰 ${b("Estimado de la web: " + soles(total))}`,
+      i(`${soles(unit)} por prenda`),
+    ],
+    big ? "Somos más de 50 prendas, ¿qué precio especial nos pueden dar? 🙌" : "¿Me confirman precio y tiempo de entrega? 🙌",
+  );
 
   return (
     <div className="quote">
@@ -180,7 +191,7 @@ export default function Quote() {
           <p className="nudge">Con {WHOLESALE_FROM - qty} prendas más pagas precio por mayor.</p>
         )}
         {big && <p className="nudge">Desde 50 prendas te damos un precio especial por chat.</p>}
-        <a className="btn btn-wa btn-block" href={waLink(msg)} target="_blank" rel="noopener noreferrer">
+        <a className="btn btn-wa btn-block" href={waLink(message)} target="_blank" rel="noopener noreferrer">
           Enviar cotización por WhatsApp
         </a>
         <p className="hint">Estimado referencial. Te confirmamos el precio final y el tiempo de entrega por chat.</p>

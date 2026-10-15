@@ -10,6 +10,7 @@ import {
 } from "react";
 import { WHOLESALE_FROM } from "@/lib/config";
 import { getProduct, soles } from "@/lib/products";
+import { b, i, msg } from "@/lib/whatsapp";
 
 export type CartItem = {
   slug: string;
@@ -106,19 +107,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const count = items.reduce((s, l) => s + l.qty, 0);
 
   const message = useCallback(() => {
-    const rows = lines.map(
-      (l) =>
-        `• ${l.qty} x ${l.name}\n   Color ${l.color}, talla ${l.size}: ${soles(l.unit)} c/u = ${soles(l.total)}${l.isWholesale ? " (precio por mayor)" : ""}`,
+    const count = lines.reduce((s, l) => s + l.qty, 0);
+    return msg(
+      ["Hola Baltica 👋", "Quiero hacer este pedido:"],
+      [`🛒 ${b(`Mi pedido (${count} ${count === 1 ? "prenda" : "prendas"})`)}`],
+      lines.map((l) =>
+        [
+          `👕 ${b(`${l.qty} × ${l.name}`)}`,
+          `Color: ${l.color}`,
+          `Talla: ${l.size}`,
+          `${soles(l.unit)} c/u = ${b(soles(l.total))}${l.isWholesale ? " " + i("(precio por mayor)") : ""}`,
+        ].join("\n"),
+      ).join("\n\n"),
+      [`💰 ${b("Total referencial: " + soles(total))}`],
+      ["¿Me confirman stock y el costo de envío? 🙌"],
     );
-    return [
-      "Hola Baltica, quiero hacer este pedido:",
-      "",
-      ...rows,
-      "",
-      `Total referencial: ${soles(total)}`,
-      "",
-      "¿Me confirman stock y el costo de envío?",
-    ].join("\n");
   }, [lines, total]);
 
   return (

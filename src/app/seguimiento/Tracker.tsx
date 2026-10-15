@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { STORE } from "@/lib/config";
 import { STEPS, getOrder, getOrders, updateOrder, type Order } from "@/lib/orders";
 import { soles } from "@/lib/products";
-import { waLink } from "@/lib/whatsapp";
+import { b, msg, waLink } from "@/lib/whatsapp";
 
 const SLOTS = ["10:00 a 12:00", "12:00 a 14:00", "14:00 a 16:00", "16:00 a 18:00"];
 
@@ -17,7 +17,7 @@ function nextDays(n: number) {
     d.setDate(d.getDate() + 1);
     if (d.getDay() === 0) continue; // domingo cerrado (referencial)
     out.push({
-      value: d.toISOString().slice(0, 10),
+      value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
       label: d.toLocaleDateString("es-PE", { weekday: "short", day: "numeric", month: "short" }),
     });
   }
@@ -32,6 +32,8 @@ export default function Tracker() {
   const [error, setError] = useState("");
   const [date, setDate] = useState("");
   const [slot, setSlot] = useState("");
+  const [pickErr, setPickErr] = useState("");
+  const [editing, setEditing] = useState(false);
   const days = nextDays(5);
 
   useEffect(() => {
@@ -59,12 +61,24 @@ export default function Tracker() {
   };
 
   const confirmPickup = () => {
-    if (!order || !date || !slot) return;
+    if (!order) return;
+    if (!date || !slot) {
+      setPickErr(!date && !slot ? "Elige el día y la hora." : !date ? "Elige el día." : "Elige la hora.");
+      return;
+    }
+    setPickErr("");
     const o = updateOrder(order.code, { pickup: { date, slot } });
     refresh(o);
-    const label = days.find((d) => d.value === date)?.label ?? date;
+    setEditing(false);
+    const label = new Date(date + "T12:00").toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" });
     window.open(
-      waLink(`Hola Baltica, paso a recoger mi pedido ${order.code} el ${label}, entre ${slot}.`),
+      waLink(
+        msg(
+          ["Hola Baltica 👋"],
+          [`📦 ${b("Recojo del pedido " + order.code)}`, `Día: ${label}`, `Hora: entre ${slot}`],
+          ["¿Me confirman que estará listo? 🙌"],
+        ),
+      ),
       "_blank",
       "noopener",
     );
@@ -111,17 +125,23 @@ export default function Tracker() {
                 <span>{s.text}</span>
                 {i === 3 && order.step === 3 && (
                   <div className="pickup">
-                    {order.pickup ? (
-                      <p className="ok-msg">
-                        Agendado para el {days.find((d) => d.value === order.pickup!.date)?.label ?? order.pickup.date},
-                        entre {order.pickup.slot}. Te esperamos en {STORE.address}, {STORE.stores}.
-                      </p>
+                    {order.pickup && !editing ? (
+                      <>
+                        <p className="ok-msg">
+                          Agendado para el{" "}
+                          {new Date(order.pickup.date + "T12:00").toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" })},
+                          entre {order.pickup.slot}. Te esperamos en {STORE.address}, {STORE.stores}.
+                        </p>
+                        <button type="button" className="link-btn" onClick={() => setEditing(true)}>
+                          Cambiar día u hora
+                        </button>
+                      </>
                     ) : (
                       <>
                         <p className="field-label">¿Qué día pasas?</p>
                         <div className="filter-row">
                           {days.map((d) => (
-                            <button key={d.value} type="button" className={`chip ${date === d.value ? "is-on" : ""}`} aria-pressed={date === d.value} onClick={() => setDate(d.value)}>
+                            <button key={d.value} type="button" className={`chip ${date === d.value ? "is-on" : ""}`} aria-pressed={date === d.value} onClick={() => { setDate(d.value); setPickErr(""); }}>
                               {d.label}
                             </button>
                           ))}
@@ -129,13 +149,14 @@ export default function Tracker() {
                         <p className="field-label">¿A qué hora?</p>
                         <div className="filter-row">
                           {SLOTS.map((s) => (
-                            <button key={s} type="button" className={`chip ${slot === s ? "is-on" : ""}`} aria-pressed={slot === s} onClick={() => setSlot(s)}>
+                            <button key={s} type="button" className={`chip ${slot === s ? "is-on" : ""}`} aria-pressed={slot === s} onClick={() => { setSlot(s); setPickErr(""); }}>
                               {s}
                             </button>
                           ))}
                         </div>
-                        <button className="btn btn-yellow" type="button" onClick={confirmPickup} disabled={!date || !slot}>
-                          Agendar recojo
+                        {pickErr && <p className="error">{pickErr}</p>}
+                        <button className="btn btn-yellow" type="button" onClick={confirmPickup}>
+                          Agendar recojo y avisar por WhatsApp
                         </button>
                       </>
                     )}

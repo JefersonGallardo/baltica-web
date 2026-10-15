@@ -68,9 +68,9 @@ export function printArea(line: Line, size: string) {
 
 type Tier = { w: number; h: number; price: number; label: string };
 const TIERS = (a: number, b: number, c: number): Tier[] => [
-  { w: 10, h: 10, price: a, label: "Logo, hasta 10 × 10 cm" },
-  { w: 21, h: 29.7, price: b, label: "Hasta A4 (21 × 29.7 cm)" },
-  { w: 29.7, h: 42, price: c, label: "Hasta A3 (29.7 × 42 cm)" },
+  { w: 10, h: 10, price: a, label: "tamaño logo, hasta 10 × 10 cm" },
+  { w: 21, h: 29.7, price: b, label: "hasta A4" },
+  { w: 29.7, h: 42, price: c, label: "hasta A3" },
 ];
 
 export const TECHNIQUES: Record<
@@ -122,7 +122,7 @@ export function sidePrice(
     const kids = line === "nino";
     return {
       price: kids ? TRANSFER_SHEET.kids : TRANSFER_SHEET.adult,
-      label: `Hoja ${LINES[line].sheet.name}`,
+      label: `hoja ${LINES[line].sheet.name}`,
     };
   }
   if (tech === "serigrafia") {

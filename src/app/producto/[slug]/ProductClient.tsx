@@ -9,7 +9,9 @@ import SizeGuide from "@/components/SizeGuide";
 import Tee from "@/components/Tee";
 import { WHOLESALE_FROM } from "@/lib/config";
 import { CATEGORY_LABEL, PRODUCTS, getProduct, soles } from "@/lib/products";
-import { waLink } from "@/lib/whatsapp";
+import { b, i, msg, siteUrl, waLink } from "@/lib/whatsapp";
+
+const LINK_TOKEN = "[enlace]";
 
 export default function ProductClient({ slug }: { slug: string }) {
   const p = getProduct(slug)!;
@@ -34,13 +36,21 @@ export default function ProductClient({ slug }: { slug: string }) {
     setOpen(true);
   };
 
-  const directMsg = [
-    `Hola Baltica, quiero ${qty} ${p.name}`,
-    `Color: ${color.name}`,
-    `Talla: ${size ?? "por definir"}`,
-    `Precio: ${soles(unit)} c/u, total ${soles(unit * qty)}${isWholesale ? " (por mayor)" : ""}`,
-    "¿Tienen stock?",
-  ].join("\n");
+  const directMsg = msg(
+    ["Hola Baltica 👋", "Quiero este polo:"],
+    [
+      `👕 ${b(p.name)}`,
+      `Color: ${color.name}`,
+      `Talla: ${size ?? "por definir"}`,
+      `Cantidad: ${qty}`,
+    ],
+    [
+      `💰 ${b("Total referencial: " + soles(unit * qty))}`,
+      i(`${soles(unit)} c/u${isWholesale ? ", precio por mayor" : ""}`),
+    ],
+    [`🔗 ${LINK_TOKEN}`],
+    ["¿Tienen stock? 🙌"],
+  );
 
   const kidsSizes = p.categories.some((c) => c === "nino" || c === "nina");
   const related = PRODUCTS.filter(
@@ -156,6 +166,12 @@ export default function ProductClient({ slug }: { slug: string }) {
             <a
               className="btn btn-wa btn-block"
               href={waLink(directMsg)}
+              onClick={(e) => {
+                // El enlace al producto se arma al tocar (necesita la dirección real de la página)
+                e.currentTarget.href = waLink(
+                  directMsg.replace(LINK_TOKEN, siteUrl(`/producto/${p.slug}/?color=${encodeURIComponent(color.name)}`)),
+                );
+              }}
               target="_blank"
               rel="noopener noreferrer"
             >
