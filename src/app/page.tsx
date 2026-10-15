@@ -1,13 +1,9 @@
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
+import RackCarousel from "@/components/RackCarousel";
 import Tee from "@/components/Tee";
 import { STORE, WHOLESALE_FROM } from "@/lib/config";
-import { C, PRODUCTS, soles, type Color } from "@/lib/products";
-
-const RACK: Color[] = [
-  C.blanco, C.arena, C.mostaza, C.rojo, C.vino, C.palo, C.lila,
-  C.celeste, C.rey, C.marino, C.botella, C.olivo, C.melange, C.negro,
-];
+import { C, PRODUCTS, soles } from "@/lib/products";
 
 const CATS = [
   { href: "/tienda/?cat=hombre", label: "Hombre", color: C.marino, shape: "tee" as const },
@@ -38,27 +34,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="rack" aria-label="Colores disponibles">
-          <div className="rack-rail" />
-          <ul className="rack-items">
-            {RACK.map((c, i) => (
-              <li key={c.name} style={{ ["--i" as string]: i }}>
-                <Link href={`/tienda/?color=${encodeURIComponent(c.name)}`} className="rack-item">
-                  <svg className="hanger" viewBox="0 0 60 30" aria-hidden="true">
-                    <path d="M30 2 Q36 2 36 8 Q36 12 30 14 L4 27 L56 27 L30 14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinejoin="round" />
-                  </svg>
-                  <Tee color={c} className="rack-tee" />
-                  <span className="rack-name">{c.name}</span>
-                </Link>
-                {i === 1 && (
-                  <span className="price-tag" aria-hidden="true">
-                    desde<b>S/ 20</b>
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <RackCarousel />
       </section>
 
       <section className="facts">
