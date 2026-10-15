@@ -1,3 +1,6 @@
+// Prefijo de rutas cuando el sitio vive en un subdirectorio (GitHub Pages).
+export const BASE = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
 // Datos de contacto de la tienda. Cambia aquí y se actualiza en todo el sitio.
 export const STORE = {
   name: "Baltica T-Shirts",

@@ -7,9 +7,12 @@ import { waLink } from "@/lib/whatsapp";
 
 // Costos referenciales de estampado por prenda (confirmar con el taller).
 const PRINT = {
-  ninguno: { label: "Sin estampado", perPlace: 0 },
-  serigrafia: { label: "Serigrafía", perPlace: 3 }, // por color y por ubicación
-  dtf: { label: "DTF a todo color", perPlace: 6 }, // por ubicación
+  ninguno: { label: "Sin estampado", perPlace: 0, note: "" },
+  transfer: { label: "Transfer", perPlace: 4, note: "El más pedido por unidad. Diseños en stock." },
+  serigrafia: { label: "Serigrafía", perPlace: 3, note: "Ideal desde una docena. Se cobra por color." }, // por color y ubicación
+  dtf: { label: "DTF", perPlace: 6, note: "A todo color, ideal desde una docena." },
+  vinilo: { label: "Vinilo de corte", perPlace: 5, note: "Nombres, números y logos de un color." },
+  pedreria: { label: "Pedrería", perPlace: 8, note: "Brillos para diseños de dama." },
 } as const;
 type PrintKind = keyof typeof PRINT;
 
@@ -104,6 +107,7 @@ export default function Quote() {
               </button>
             ))}
           </div>
+          {PRINT[print].note && <p className="hint">{PRINT[print].note}</p>}
         </fieldset>
 
         {print !== "ninguno" && (

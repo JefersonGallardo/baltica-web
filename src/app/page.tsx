@@ -101,7 +101,7 @@ export default function Home() {
           <div>
             <h2>Uniformes, promociones y reventa</h2>
             <p>
-              Te hacemos precio por cantidad y estampamos tu logo en serigrafía o DTF.
+              Te hacemos precio por cantidad y estampamos tu logo en serigrafía, DTF, transfer, vinilo o pedrería.
               Arma tu cotización en un minuto y te respondemos por WhatsApp.
             </p>
             <Link href="/mayoristas/" className="btn btn-yellow">

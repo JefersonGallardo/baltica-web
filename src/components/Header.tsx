@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { BASE } from "@/lib/config";
 import { useCart } from "./CartProvider";
 
 const NAV = [
@@ -23,8 +24,9 @@ export default function Header() {
       </div>
       <header className="header">
         <div className="wrap header-inner">
-          <Link href="/" className="wordmark" aria-label="Baltica, inicio">
-            BALTICA<span>T-Shirts · Gamarra</span>
+          <Link href="/" className="logo" aria-label="Baltica T-Shirts, inicio">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`${BASE}/logo-baltica.png`} alt="Baltica T-Shirts" width={1040} height={376} />
           </Link>
           <nav className={`nav ${menu ? "nav-open" : ""}`} aria-label="Principal">
             {NAV.map((n) => (

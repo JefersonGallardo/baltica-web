@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { STORE } from "@/lib/config";
+import { BASE, STORE } from "@/lib/config";
 import { waLink } from "@/lib/whatsapp";
 
 export default function Footer() {
@@ -7,9 +7,10 @@ export default function Footer() {
     <footer className="footer">
       <div className="wrap footer-grid">
         <div>
-          <p className="wordmark wordmark-light">
-            BALTICA<span>T-Shirts · Gamarra</span>
-          </p>
+          <span className="logo-footer">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`${BASE}/logo-baltica-blanco.png`} alt="Baltica T-Shirts" width={1040} height={376} />
+          </span>
           <p className="footer-text">
             Confeccionamos polos y poleras en nuestro taller de Gamarra. Vendemos por unidad, por
             mayor y con estampado para empresas.

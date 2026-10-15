@@ -23,7 +23,7 @@ export default function Mayoristas() {
           <h1>Por mayor y para empresas</h1>
           <p className="lead">
             Desde {WHOLESALE_FROM} prendas del mismo modelo pagas precio por mayor. Si necesitas tu
-            logo, lo estampamos en serigrafía o DTF aquí mismo en Gamarra.
+            logo, lo estampamos aquí mismo en Gamarra: transfer, serigrafía, DTF, vinilo de corte o pedrería.
           </p>
         </div>
       </section>
