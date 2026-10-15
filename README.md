@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Baltica T-Shirts: propuesta de rediseño
 
-## Getting Started
+Demo de la nueva tienda web de [Baltica T-Shirts](https://www.polosbaltica.com/), polos y poleras de Gamarra. Hecha en Next.js como sitio estático, lista para publicarse gratis en GitHub Pages.
 
-First, run the development server:
+## Qué incluye
+
+- **Portada nueva**: un colgador con todos los colores de la tienda, lo más pedido, categorías, banda de mayoristas y cómo comprar.
+- **Tienda con filtros**: por categoría (hombre, dama, niño, niña), color y talla, con precios siempre visibles. Los filtros quedan en el enlace, así se pueden compartir (ej. `/tienda/?cat=dama&color=Negro`).
+- **Ficha de producto**: un solo producto con todos sus colores (hoy cada color es un producto aparte), guía de tallas, cantidad y aviso de cuánto falta para el precio por mayor.
+- **Pedido por WhatsApp**: el carrito arma el mensaje con modelo, color, talla, cantidad, precio y total. Desde 12 prendas del mismo modelo se aplica solo el precio por mayor.
+- **Por mayor y empresas**: cotizador con modelo, cantidad, tipo de estampado (serigrafía o DTF), ubicaciones y fecha, que envía la cotización por WhatsApp. Incluye la tabla de precios por cantidad.
+
+## Antes de mostrarla
+
+- **Precios**: son referenciales. Se cambian en `src/lib/products.ts` (precio por unidad y por mayor de cada modelo).
+- **Costos de estampado**: en `src/app/mayoristas/Quote.tsx`.
+- **Medidas de la guía de tallas**: en `src/components/SizeGuide.tsx`.
+- **WhatsApp, dirección y redes**: en `src/lib/config.ts`.
+- **Fotos**: la demo usa ilustraciones de cada prenda en su color. En la versión final van fotos reales de cada modelo y color.
+
+## Correr en tu computadora
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Publicar en GitHub Pages
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Crea un repositorio nuevo en GitHub (por ejemplo `baltica-web`), sin README.
+2. En esta carpeta:
+   ```bash
+   git remote add origin https://github.com/TU-USUARIO/baltica-web.git
+   git push -u origin main
+   ```
+3. En el repositorio, ve a **Settings → Pages** y en **Source** elige **GitHub Actions**.
+4. Espera a que termine la acción "Publicar en GitHub Pages" (pestaña **Actions**). La demo queda en `https://TU-USUARIO.github.io/baltica-web/`.
 
-## Learn More
+Cada vez que hagas `git push` a `main`, la página se vuelve a publicar sola.
 
-To learn more about Next.js, take a look at the following resources:
+## Estructura
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+  app/
+    page.tsx               Portada
+    tienda/                Catálogo con filtros
+    producto/[slug]/       Ficha de producto
+    mayoristas/            Por mayor, cotizador y tabla de precios
+    globals.css            Estilos y colores de la marca
+  components/              Header, carrito, tarjetas, ilustración de prenda, etc.
+  lib/
+    config.ts              Datos de contacto
+    products.ts            Catálogo y precios
+    whatsapp.ts            Enlaces de WhatsApp
+```
