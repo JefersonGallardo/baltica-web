@@ -117,7 +117,14 @@ export default function Studio() {
   const viewCache = useRef(new Map<string, string>());
 
   // Final
-  const [result, setResult] = useState<null | { code: string; image: string; msg: string; preview: File; pdf: File }>(null);
+  const [result, setResult] = useState<null | {
+    code: string;
+    image: string;
+    msg: string;
+    preview: File;
+    designs: { file: File; url: string; label: string; px: string }[];
+  }>(null);
+  const [sent, setSent] = useState<Record<string, boolean>>({});
 
   const shape = product.shape;
   const area = printArea(line, LINES[line].sizes.some((s) => s.size === size) ? size : LINES[line].sizes[0].size);
@@ -343,15 +350,15 @@ export default function Studio() {
       ctx.fillText(SIDE_LABEL[s], ox + TW / 2, oy + TW * 1.1 + 40);
     }
     ctx.textAlign = "left";
-    ctx.font = "800 34px Archivo, Arial, sans-serif";
+    ctx.font = "800 36px Archivo, Arial, sans-serif";
     ctx.fillStyle = "#D7262F";
-    ctx.fillText(`Pedido ${code}`, 60, H - 60);
+    ctx.fillText(`Pedido ${code}`, 60, H - 92);
     ctx.font = "500 26px Archivo, Arial, sans-serif";
     ctx.fillStyle = "#242424";
     ctx.fillText(
-      `${product.name}, ${color.name}, talla ${size}, ${qty} ${qty === 1 ? "unidad" : "unidades"}. ${TECHNIQUES[tech].label}.`,
-      420,
-      H - 60,
+      `${product.name}, ${color.name}, talla ${size}, ${qty} ${qty === 1 ? "unidad" : "unidades"}. Estampado ${TECHNIQUES[tech].label}.`,
+      60,
+      H - 50,
     );
     const image = c.toDataURL("image/png");
     const blob = await canvasBlob(c, "image/png");
@@ -375,127 +382,102 @@ export default function Studio() {
           : `Quitar fondo blanco a "${l.name}" (${SIDE_LABEL[l.side].toLowerCase()})`,
       );
 
-    // ----- PDF con el diseño original, a tamaño real de impresión -----
-    const pdfFile = await buildPdf(code, c, [garmentLine, `Estampado: ${techLabel}`, sideText("front", fpFront, prFront), sideText("back", fpBack, prBack), ...notes, `Total referencial: ${soles(total)}`]);
+    // ----- Diseños del cliente, solos y en calidad original -----
+    const designs = await buildDesignFiles(code);
 
-    // ----- Mensaje de WhatsApp -----
+    // ----- Mensaje de WhatsApp (sin emojis: WhatsApp Web los rompe en los enlaces) -----
     const msgText = msg(
-      [`Hola Baltica 👋`, `Quiero este polo personalizado.`],
-      [`🧾 ${b("Pedido " + code)}`],
+      ["Hola Baltica, quiero este polo personalizado."],
+      [b(`PEDIDO ${code}`)],
       [
-        `👕 ${b("Prenda")}`,
+        b("Prenda"),
         `${product.name} (${LINES[line].label})`,
         `Color: ${color.name}`,
         `Talla: ${size}`,
         `Cantidad: ${qty}`,
       ],
       [
-        `🎨 ${b("Estampado: " + techLabel)}`,
+        b(`Estampado: ${techLabel}`),
         `- ${sideText("front", fpFront, prFront)}`,
         `- ${sideText("back", fpBack, prBack)}`,
         ...notes.map((x) => `- ${x}`),
       ],
       [
-        `💰 ${b("Total referencial: " + soles(total))}`,
-        i(`${qty > 1 ? `${qty} × ` : ""}polo ${soles(garment)} + estampado ${soles(prFront.price + prBack.price)}`),
+        b(`Total referencial: ${soles(total)}`),
+        i(`${qty > 1 ? `${qty} x ` : ""}polo ${soles(garment)} + estampado ${soles(prFront.price + prBack.price)}`),
       ],
       [
-        `📎 Adjunto la vista previa y el ${b("PDF con mi diseño original")} en alta calidad.`,
-        `Seguimiento: ${siteUrl(`/seguimiento/?codigo=${code}`)}`,
+        b("Archivos"),
+        "- Vista previa del polo",
+        ...designs.map((d) => `- ${d.file.name} (diseño en calidad original, va como documento)`),
       ],
+      [`Seguimiento: ${siteUrl(`/seguimiento/?codigo=${code}`)}`],
     );
     // eslint-disable-next-line react-hooks/purity
     saveOrder({ code, createdAt: Date.now(), step: 0, detail: [...detail, ...notes], total });
     setBusy(false);
-    setResult({ code, image, msg: msgText, preview, pdf: pdfFile });
+    setSent({});
+    setResult({ code, image, msg: msgText, preview, designs });
   };
 
-  // Un documento no pasa por la compresión de fotos de WhatsApp: la imagen llega intacta.
-  const buildPdf = async (code: string, mockup: HTMLCanvasElement, lines: string[]) => {
-    const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
-    const doc = await PDFDocument.create();
-    doc.setTitle(`Pedido ${code}: diseño original`);
-    doc.setAuthor("Baltica T-Shirts");
-    doc.setCreator("polosbaltica.com, Creativo");
-    const font = await doc.embedFont(StandardFonts.Helvetica);
-    const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-    const CM = 28.3465;
-    const red = rgb(215 / 255, 38 / 255, 47 / 255);
-    const ink = rgb(0.14, 0.14, 0.14);
-
-    // Página 1: hoja de trabajo para el taller (A4)
-    const p1 = doc.addPage([21 * CM, 29.7 * CM]);
-    const W = p1.getWidth(), H = p1.getHeight();
-    p1.drawText(`Pedido ${code}`, { x: 40, y: H - 60, size: 24, font: bold, color: red });
-    p1.drawText(new Date().toLocaleString("es-PE"), { x: 40, y: H - 80, size: 10, font, color: ink });
-    const mk = await doc.embedPng(await (await canvasBlob(mockup, "image/png")).arrayBuffer());
-    const mw = W - 80, mh = (mw * mockup.height) / mockup.width;
-    p1.drawImage(mk, { x: 40, y: H - 100 - mh, width: mw, height: mh });
-    let y = H - 130 - mh;
-    for (const line of lines) {
-      for (const chunk of wrap(line, 95)) {
-        p1.drawText(chunk, { x: 40, y, size: 11, font: line.startsWith("Total") ? bold : font, color: ink });
-        y -= 16;
-      }
-    }
-    y -= 8;
-    p1.drawText("Las páginas siguientes tienen cada diseño a su tamaño real de impresión.", { x: 40, y, size: 10, font, color: ink });
-
-    // Una página por diseño, del tamaño exacto en que irá estampado
+  // Cada diseño del frente y la espalda, solo, en PNG (sin pérdida) a su resolución completa.
+  const buildDesignFiles = async (code: string) => {
+    const out: { file: File; url: string; label: string; px: string }[] = [];
     for (const s of ["front", "back"] as Side[]) {
-      for (const l of layers.filter((x) => x.side === s)) {
+      const ls = layers.filter((x) => x.side === s);
+      for (const [k, l] of ls.entries()) {
         let src: HTMLCanvasElement | undefined;
-        let photo = false;
-        if (l.kind === "image") {
-          const o = originals.current.get(l.id);
-          src = o?.canvas;
-          photo = !!o?.photo;
-        } else if (l.kind === "design" && l.design !== undefined) {
-          src = await svgToCanvas(DESIGNS[l.design].svg, 3000);
-        } else if (l.kind === "text" && l.text) {
-          src = await renderText(l.text.value, l.text.font, l.text.color, 480);
-        }
+        if (l.kind === "image") src = originals.current.get(l.id)?.canvas;
+        else if (l.kind === "design" && l.design !== undefined) src = await svgToCanvas(DESIGNS[l.design].svg, 3000);
+        else if (l.kind === "text" && l.text) src = await renderText(l.text.value, l.text.font, l.text.color, 480);
         src ??= sources.current.get(l.id);
         if (!src) continue;
-        const bytes = await (await canvasBlob(src, photo ? "image/jpeg" : "image/png", 0.95)).arrayBuffer();
-        const img = photo ? await doc.embedJpg(bytes) : await doc.embedPng(bytes);
-        const w = l.w * CM;
-        const h = (w * img.height) / img.width;
-        const page = doc.addPage([w, h]);
-        page.drawImage(img, { x: 0, y: 0, width: w, height: h });
+        const blob = await canvasBlob(src, "image/png");
+        const side = s === "front" ? "frente" : "espalda";
+        const file = new File([blob], `${code}-${side}-${k + 1}.png`, { type: "image/png" });
+        out.push({
+          file,
+          url: URL.createObjectURL(blob),
+          label: `${SIDE_LABEL[s]}: ${l.kind === "text" ? `texto "${l.text?.value}"` : l.name}`,
+          px: `${src.width} × ${src.height} px, ${blob.size > 1024 * 1024 ? `${(blob.size / 1024 / 1024).toFixed(1)} MB` : `${Math.ceil(blob.size / 1024)} KB`}`,
+        });
       }
     }
-    const out = await doc.save();
-    return new File([out.slice().buffer as ArrayBuffer], `${code}-diseno-original.pdf`, { type: "application/pdf" });
+    return out;
   };
 
-  const share = async () => {
+  // Paso 1: el mensaje y la vista previa (como foto: aquí la compresión no importa)
+  const sharePreview = async () => {
     if (!result) return;
-    const data = { files: [result.preview, result.pdf], text: result.msg };
+    const data = { files: [result.preview], text: result.msg };
     if (navigator.canShare?.(data)) {
       try {
         await navigator.share(data);
+        setSent((x) => ({ ...x, preview: true }));
         return;
       } catch (e) {
         if ((e as Error).name === "AbortError") return;
       }
     }
-    // Computadora: se descargan los dos archivos y se abre el chat con el mensaje listo
-    downloadAll();
+    save(result.preview);
     window.open(waLink(result.msg), "_blank", "noopener");
+    setSent((x) => ({ ...x, preview: true }));
   };
   const save = (f: File) => {
     const url = URL.createObjectURL(f);
     const a = document.createElement("a");
     a.href = url;
     a.download = f.name;
+    document.body.appendChild(a);
     a.click();
+    a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   };
-  const downloadAll = () => {
+  // Paso 2: cada diseño se guarda en el equipo para adjuntarlo como Documento
+  const saveDesign = (k: number) => {
     if (!result) return;
-    save(result.preview);
-    setTimeout(() => save(result.pdf), 400);
+    save(result.designs[k].file);
+    setSent((x) => ({ ...x, [k]: true }));
   };
 
   const onSide = layers.filter((l) => l.side === side);
@@ -910,34 +892,58 @@ export default function Studio() {
                 Tu código de pedido es <strong className="code">{result.code}</strong>. Guárdalo para ver el
                 estado de tu pedido.
               </p>
-              <div className="files-out">
-                <span>
-                  <strong>{result.preview.name}</strong>
-                  Vista previa del polo
-                </span>
-                <span>
-                  <strong>{result.pdf.name}</strong>
-                  Tu diseño original en alta calidad, a tamaño real ({(result.pdf.size / 1024 / 1024).toFixed(1)} MB)
-                </span>
-              </div>
-              <ol className="result-steps">
-                <li>Toca el botón verde y elige el chat de Baltica: se envían el mensaje y los dos archivos.</li>
-                <li>En la computadora, los archivos se descargan y se abre el chat: adjúntalos con el clip como <b>Documento</b>, así WhatsApp no les baja la calidad.</li>
-                <li>Te confirmamos el precio final y el pago, y sigues tu pedido con tu código.</li>
+              <ol className="send-steps">
+                <li className={sent.preview ? "done" : ""}>
+                  <strong>Envía tu pedido y la vista previa</strong>
+                  <span>Se abre WhatsApp con el detalle de tu pedido. Elige el chat de Baltica.</span>
+                  <button className="btn btn-wa btn-block" onClick={sharePreview}>
+                    {sent.preview ? "Enviar de nuevo" : "Enviar pedido por WhatsApp"}
+                  </button>
+                  <a href={waLink(result.msg)} target="_blank" rel="noopener noreferrer" className="link-btn small">
+                    ¿No aparece Baltica al compartir? Abre el chat directo
+                  </a>
+                </li>
+                <li className={result.designs.every((_, k) => sent[k]) ? "done" : ""}>
+                  <strong>Envía tu diseño en calidad original</strong>
+                  <span>
+                    Si lo mandas como foto, WhatsApp lo comprime. Guárdalo y adjúntalo como{" "}
+                    <b>Documento</b>: llega intacto para estampar.
+                  </span>
+                  <ul className="design-files">
+                    {result.designs.map((d, k) => (
+                      <li key={d.file.name}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={d.url} alt="" />
+                        <div>
+                          <strong>{d.label}</strong>
+                          <small>
+                            {d.file.name}, {d.px}
+                          </small>
+                        </div>
+                        <button className={`btn ${sent[k] ? "btn-outline" : "btn-dark"}`} onClick={() => saveDesign(k)}>
+                          {sent[k] ? "Guardado" : "Guardar"}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <details className="howto">
+                    <summary>¿Cómo se adjunta como Documento?</summary>
+                    <ol>
+                      <li>En el chat de Baltica toca el clip (Android) o el + (iPhone).</li>
+                      <li>Elige <b>Documento</b>. No elijas Galería ni Fotos.</li>
+                      <li>Busca el archivo en Descargas (Android) o en Archivos (iPhone) y envíalo.</li>
+                      <li>En la computadora, arrastra el archivo al chat de WhatsApp Web y elige enviarlo como documento.</li>
+                    </ol>
+                  </details>
+                </li>
+                <li>
+                  <strong>Te confirmamos el precio final y el pago</strong>
+                  <span>Sigue tu pedido con tu código y agenda cuándo recogerlo.</span>
+                </li>
               </ol>
-              <button className="btn btn-wa btn-block" onClick={share}>
-                Enviar mi diseño por WhatsApp
-              </button>
-              <p className="hint center">
-                ¿No te aparece Baltica al compartir?{" "}
-                <a href={waLink(result.msg)} target="_blank" rel="noopener noreferrer" className="link-btn">
-                  Abre primero el chat con tu pedido
-                </a>{" "}
-                y luego vuelve a tocar el botón verde.
-              </p>
               <div className="result-row">
-                <button className="btn btn-outline" onClick={downloadAll}>
-                  Descargar archivos
+                <button className="btn btn-outline" onClick={() => result && save(result.preview)}>
+                  Guardar vista previa
                 </button>
                 <Link className="btn btn-outline" href={`/seguimiento/?codigo=${result.code}`}>
                   Ver seguimiento
@@ -951,17 +957,3 @@ export default function Studio() {
   );
 }
 
-
-function wrap(text: string, max: number) {
-  const words = text.split(" ");
-  const out: string[] = [];
-  let cur = "";
-  for (const w of words) {
-    if ((cur + " " + w).trim().length > max) {
-      out.push(cur.trim());
-      cur = w;
-    } else cur += " " + w;
-  }
-  if (cur.trim()) out.push(cur.trim());
-  return out;
-}

@@ -530,3 +530,19 @@ main > :last-child.wrap.section { padding-bottom: clamp(56px, 8vw, 96px); }
 .files-out { display: grid; gap: 8px; }
 .files-out span { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: .82rem; color: var(--muted); }
 .files-out strong { color: var(--ink); font-size: .88rem; word-break: break-all; }
+.send-steps { list-style: none; counter-reset: st; margin: 0; padding: 0; display: grid; gap: 14px; }
+.send-steps > li { counter-increment: st; position: relative; display: grid; gap: 8px; padding: 14px 14px 14px 52px; border: 1px solid var(--line); border-radius: 12px; }
+.send-steps > li::before { content: counter(st); position: absolute; left: 14px; top: 14px; width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: .85rem; }
+.send-steps > li.done::before { content: "✓"; background: #1d6b3a; }
+.send-steps > li > span { color: var(--muted); font-size: .9rem; }
+.link-btn.small { font-size: .82rem; justify-self: center; }
+.design-files { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.design-files li { display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; align-items: center; padding: 8px; background: var(--mist); border-radius: 10px; }
+.design-files img { width: 52px; height: 52px; object-fit: contain; background: repeating-conic-gradient(#b9b9bf 0 25%, #d9d9de 0 50%) 0 0 / 12px 12px; border-radius: 6px; }
+.design-files strong { display: block; font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.design-files small { color: var(--muted); font-size: .76rem; word-break: break-all; }
+.design-files div { min-width: 0; }
+.design-files .btn { min-height: 38px; padding: 0 14px; font-size: .88rem; }
+.howto { font-size: .88rem; }
+.howto summary { cursor: pointer; color: var(--red); font-weight: 600; }
+.howto ol { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 4px; color: var(--muted); }

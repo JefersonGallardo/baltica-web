@@ -37,19 +37,19 @@ export default function ProductClient({ slug }: { slug: string }) {
   };
 
   const directMsg = msg(
-    ["Hola Baltica 👋", "Quiero este polo:"],
+    ["Hola Baltica, quiero este polo:"],
     [
-      `👕 ${b(p.name)}`,
+      `${b(p.name)}`,
       `Color: ${color.name}`,
       `Talla: ${size ?? "por definir"}`,
       `Cantidad: ${qty}`,
     ],
     [
-      `💰 ${b("Total referencial: " + soles(unit * qty))}`,
-      i(`${soles(unit)} c/u${isWholesale ? ", precio por mayor" : ""}`),
+      `${b("Total referencial: " + soles(unit * qty))}`,
+      i(`${soles(unit)} c/u${isWholesale ?", precio por mayor" : ""}`),
     ],
-    [`🔗 ${LINK_TOKEN}`],
-    ["¿Tienen stock? 🙌"],
+    [`${LINK_TOKEN}`],
+    ["¿Tienen stock?"],
   );
 
   const kidsSizes = p.categories.some((c) => c === "nino" || c === "nina");

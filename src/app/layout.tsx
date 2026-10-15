@@ -7,6 +7,12 @@ import CartDrawer from "@/components/CartDrawer";
 import WaFloat from "@/components/WaFloat";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://jefersongallardo.github.io"),
+  openGraph: {
+    siteName: "Baltica T-Shirts",
+    locale: "es_PE",
+    type: "website",
+  },
   title: "Baltica T-Shirts | Polos de algodón en Gamarra, por unidad y por mayor",
   description:
     "Polos y poleras de algodón confeccionados en Gamarra. Compra por unidad o por mayor, con estampado para empresas. Pedidos por WhatsApp y envíos a todo el Perú.",

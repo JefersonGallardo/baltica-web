@@ -45,28 +45,28 @@ export default function Quote() {
     ? new Date(date + "T12:00").toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" })
     : "";
   const message = msg(
-    ["Hola Baltica 👋", "Quiero una cotización por mayor:"],
+    ["Hola Baltica, quiero una cotización por mayor:"],
     [
-      `🏷️ ${b("Pedido")}`,
+      `${b("Pedido")}`,
       `Modelo: ${p.name}`,
       `Cantidad: ${qty} prendas`,
       colors && `Colores: ${colors}`,
     ],
     [
-      `🎨 ${b("Estampado: " + PRINT[print].label)}`,
+      `${b("Estampado: " + PRINT[print].label)}`,
       print !== "ninguno" && `Ubicación: ${places.join(", ").toLowerCase() || "por definir"}`,
       print === "serigrafia" && `Colores del diseño: ${inks}`,
     ],
     (date || name) && [
-      `📋 ${b("Datos")}`,
+      `${b("Datos")}`,
       name && `Nombre o empresa: ${name}`,
       date && `Lo necesito para: ${dateLabel}`,
     ],
     [
-      `💰 ${b("Estimado de la web: " + soles(total))}`,
+      `${b("Estimado de la web: " + soles(total))}`,
       i(`${soles(unit)} por prenda`),
     ],
-    big ? "Somos más de 50 prendas, ¿qué precio especial nos pueden dar? 🙌" : "¿Me confirman precio y tiempo de entrega? 🙌",
+    big ? "Somos más de 50 prendas, ¿qué precio especial nos pueden dar?" : "¿Me confirman precio y tiempo de entrega?",
   );
 
   return (

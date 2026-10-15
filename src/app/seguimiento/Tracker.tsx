@@ -74,9 +74,9 @@ export default function Tracker() {
     window.open(
       waLink(
         msg(
-          ["Hola Baltica 👋"],
-          [`📦 ${b("Recojo del pedido " + order.code)}`, `Día: ${label}`, `Hora: entre ${slot}`],
-          ["¿Me confirman que estará listo? 🙌"],
+          ["Hola Baltica, quiero agendar el recojo de mi pedido."],
+          [`${b("Recojo del pedido " + order.code)}`, `Día: ${label}`, `Hora: entre ${slot}`],
+          ["¿Me confirman que estará listo?"],
         ),
       ),
       "_blank",

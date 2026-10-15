@@ -109,18 +109,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const message = useCallback(() => {
     const count = lines.reduce((s, l) => s + l.qty, 0);
     return msg(
-      ["Hola Baltica 👋", "Quiero hacer este pedido:"],
-      [`🛒 ${b(`Mi pedido (${count} ${count === 1 ? "prenda" : "prendas"})`)}`],
+      ["Hola Baltica, quiero hacer este pedido:"],
+      [`${b(`Mi pedido (${count} ${count === 1 ? "prenda" : "prendas"})`)}`],
       lines.map((l) =>
         [
-          `👕 ${b(`${l.qty} × ${l.name}`)}`,
+          `${b(`${l.qty} × ${l.name}`)}`,
           `Color: ${l.color}`,
           `Talla: ${l.size}`,
           `${soles(l.unit)} c/u = ${b(soles(l.total))}${l.isWholesale ? " " + i("(precio por mayor)") : ""}`,
         ].join("\n"),
       ).join("\n\n"),
-      [`💰 ${b("Total referencial: " + soles(total))}`],
-      ["¿Me confirman stock y el costo de envío? 🙌"],
+      [`${b("Total referencial: " + soles(total))}`],
+      ["¿Me confirman stock y el costo de envío?"],
     );
   }, [lines, total]);
 
